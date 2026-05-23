@@ -1,0 +1,5 @@
+pypdf2==3.0.1
+sentence-transformers==3.0.1
+faiss-cpu==1.8.0
+numpy==1.26.4
+ollama==0.2.1

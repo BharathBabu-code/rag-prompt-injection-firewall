@@ -1,0 +1,13 @@
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Local database indexes (we will generate these in week 2)
+embeddings/*.index
+
+# Local run logs
+logs/*.log
