@@ -3,9 +3,9 @@ import re
 def scan_file_for_injections(file_path):
     # Updated patterns using .* to catch filler words inserted by attackers
     danger_patterns = [
-        r"ignore.*previous.*instructions",
-        r"system.*override",
-        r"reveal.*password"
+        r"ignore.*?previous.*?instructions",
+        r"system.*?override",
+        r"reveal.*?password"
     ]
     
     print(f"Reading target file: {file_path}")
