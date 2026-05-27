@@ -11,3 +11,9 @@ embeddings/*.index
 
 # Local run logs
 logs/*.log
+
+# Ignore raw data files
+data/
+
+# Ignore all generated database files
+embeddings/
