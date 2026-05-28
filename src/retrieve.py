@@ -20,3 +20,25 @@ def load_database(db_dir="embeddings"):
         chunks = json.load(f)
         
     return index, chunks
+
+def search_chunks(query, index, chunks, top_k=3):
+    """Converts the user question to a vector and finds the closest text chunks."""
+    print(f"[*] Searching for context related to: '{query}'...")
+    
+    # We must use the EXACT SAME embedding model we used in ingest.py
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    
+    # Convert query to vector
+    query_vector = model.encode([query])
+    query_vector = np.array(query_vector).astype('float32')
+    
+    # Search FAISS. Returns distances (how close they are) and indices (the chunk ID numbers)
+    distances, indices = index.search(query_vector, top_k)
+    
+    # Retrieve the actual English text for those top matches
+    retrieved_text = []
+    for i in indices[0]:
+        if i != -1: # -1 means no match found
+            retrieved_text.append(chunks[i])
+            
+    return retrieved_text
