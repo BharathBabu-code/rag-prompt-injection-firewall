@@ -70,3 +70,23 @@ def ask_llm(query, context_chunks):
     
     return response['message']['content']
 
+if __name__ == "__main__":
+    try:
+        # 1. Load the database
+        faiss_index, text_chunks = load_database()
+        
+        # 2. Define the question you want to ask about your PDF
+        user_question = "What is the main topic of this document?"
+        
+        # 3. Find the most relevant chunks
+        relevant_chunks = search_chunks(user_question, faiss_index, text_chunks)
+        
+        # 4. Generate the answer
+        print("\n" + "="*50)
+        answer = ask_llm(user_question, relevant_chunks)
+        print("\n[AI RESPONSE]:")
+        print(answer)
+        print("="*50 + "\n")
+        
+    except Exception as e:
+        print(f"\n[ERROR] Pipeline failed: {e}")
