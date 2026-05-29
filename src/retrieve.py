@@ -42,3 +42,31 @@ def search_chunks(query, index, chunks, top_k=3):
             retrieved_text.append(chunks[i])
             
     return retrieved_text
+
+
+def ask_llm(query, context_chunks):
+    """Combines the context and query, then asks the local Mistral model."""
+    print("[*] Generating answer using local LLM...")
+    
+    # Combine all the chunks into one big string of context
+    context_string = "\n\n".join(context_chunks)
+    
+    # This is the "System Prompt" - the rules of engagement for the AI
+    system_instruction = """
+    You are a helpful company assistant. You will be provided with context from internal documents.
+    Answer the user's question using ONLY the provided context. 
+    If the answer is not in the context, say "I cannot find the answer in the provided documents."
+    Do not make things up.
+    """
+    
+    # Combine everything into the final prompt
+    final_prompt = f"Context:\n{context_string}\n\nQuestion:\n{query}"
+    
+    # Send it to Ollama
+    response = ollama.chat(model='mistral', messages=[
+        {'role': 'system', 'content': system_instruction},
+        {'role': 'user', 'content': final_prompt}
+    ])
+    
+    return response['message']['content']
+
