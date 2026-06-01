@@ -6,17 +6,28 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-def extract_text_from_pdf(pdf_path):
-    """Reads a PDF and extracts raw text from all pages."""
-    print(f"[*] Extracting text from {pdf_path}...")
-    text = ""
-    with open(pdf_path, 'rb') as file:
-        reader = PyPDF2.PdfReader(file)
-        for page in reader.pages:
-            extracted = page.extract_text()
-            if extracted:
-                text += extracted + " "
-    return text
+def read_file_content(file_path):
+    """Dynamically reads a file based on its extension (.pdf or .txt)."""
+    # Check if it's a plain text file
+    if file_path.endswith('.txt'):
+        print(f"[*] Extracting text from raw text file: {file_path}...")
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            return file.read()
+            
+    # Check if it's a PDF
+    elif file_path.endswith('.pdf'):
+        print(f"[*] Extracting text from PDF file: {file_path}...")
+        text = ""
+        with open(file_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text += extracted + " "
+        return text
+    
+    else:
+        raise ValueError(f"Unsupported file format: {file_path}")
 
 def clean_text(raw_text):
     """Sanitizes messy PDF text by removing weird spacing and broken lines."""
@@ -73,13 +84,13 @@ def build_and_save_vector_db(chunks, db_dir="embeddings"):
 
 if __name__ == "__main__":
     # Define our target file
-    target_pdf = "data/sample.pdf"
+    target_file = "attacks/malicious_doc.txt"
     
-    if not os.path.exists(target_pdf):
-        print(f"[ERROR] Could not find {target_pdf}. Please put a PDF in the data folder.")
+    if not os.path.exists(target_file):
+        print(f"[ERROR] Could not find {target_file}. Please put a PDF in the data folder.")
     else:
         # The Pipeline Execution
-        raw_text = extract_text_from_pdf(target_pdf)
+        raw_text = read_file_content(target_file)
         clean_text_data = clean_text(raw_text)
         document_chunks = chunk_text(clean_text_data)
         build_and_save_vector_db(document_chunks)
