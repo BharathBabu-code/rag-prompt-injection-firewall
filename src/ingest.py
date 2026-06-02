@@ -84,7 +84,7 @@ def build_and_save_vector_db(chunks, db_dir="embeddings"):
 
 if __name__ == "__main__":
     # Define our target file
-    target_file = "attacks/malicious_doc.txt"
+    target_file = "attacks/role_confusion.txt"
     
     if not os.path.exists(target_file):
         print(f"[ERROR] Could not find {target_file}. Please put a PDF in the data folder.")
