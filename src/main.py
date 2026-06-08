@@ -2,6 +2,7 @@ import os
 import sys
 import ingest
 import retrieve
+from detector import scan_and_redact
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -39,9 +40,17 @@ def menu_ask_question():
     question = input("\n[?] Enter your question for the AI: ").strip()
 
     if mode == "1":
-        print("\n[ROUTING THROUGH SECURITY MIDDLEWARE...]")
-        # Uses your secure Phase 1 (Regex) + Phase 2 (AI) firewall
-        relevant_chunks = retrieve.search_and_sanitize_chunks(question, index, chunks)
+        print("\n[🛡️ ROUTING THROUGH SECURITY MIDDLEWARE...]")
+        print("[*] Scanning user input for direct prompt injection...")
+        safe_question, is_direct_attack = scan_and_redact(question)
+        
+        if is_direct_attack:
+            print("\n[🚨 CRITICAL] Direct Prompt Injection detected in user input!")
+            print("[!] Query blocked and logged. Disconnecting session.")
+            input("\nPress Enter to return to menu...")
+            return
+        relevant_chunks = retrieve.search_and_sanitize_chunks(safe_question, index, chunks)
+        answer = retrieve.ask_llm(safe_question, relevant_chunks)
     else:
         print("\n[⚠️ WARNING: BYPASSING FIREWALL...]")
         # Bypasses the firewall, simulating a raw, unprotected RAG search
@@ -52,7 +61,7 @@ def menu_ask_question():
         _, indices = index.search(q_vec, 3)
         relevant_chunks = [chunks[i] for i in indices[0] if i != -1]
 
-    answer = retrieve.ask_llm(question, relevant_chunks)
+        answer = retrieve.ask_llm(question, relevant_chunks)
     
     print("\n" + "="*50)
     print("[AI RESPONSE]:")
