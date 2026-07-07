@@ -40,19 +40,19 @@ def menu_ask_question():
     question = input("\n[?] Enter your question for the AI: ").strip()
 
     if mode == "1":
-        print("\n[🛡️ ROUTING THROUGH SECURITY MIDDLEWARE...]")
+        print("\n[ ROUTING THROUGH SECURITY MIDDLEWARE...]")
         print("[*] Scanning user input for direct prompt injection...")
         safe_question, is_direct_attack = scan_and_redact(question)
         
         if is_direct_attack:
-            print("\n[🚨 CRITICAL] Direct Prompt Injection detected in user input!")
+            print("\n[!! CRITICAL] Direct Prompt Injection detected in user input!")
             print("[!] Query blocked and logged. Disconnecting session.")
             input("\nPress Enter to return to menu...")
             return
         relevant_chunks = retrieve.search_and_sanitize_chunks(safe_question, index, chunks)
         answer = retrieve.ask_llm(safe_question, relevant_chunks)
     else:
-        print("\n[⚠️ WARNING: BYPASSING FIREWALL...]")
+        print("\n[!! WARNING: BYPASSING FIREWALL...]")
         # Bypasses the firewall, simulating a raw, unprotected RAG search
         from sentence_transformers import SentenceTransformer
         import numpy as np
