@@ -1,43 +1,88 @@
-# Environment & Dependency Log: RAG-Firewall Project
+#  RAG Prompt Injection Firewall & Security Middleware
 
-This document catalogs the underlying system utilities, localized AI infrastructure, and Python libraries installed during the initial workspace setup.
+A dual-phase, zero-trust security middleware designed to protect Retrieval-Augmented Generation (RAG) applications from direct prompt injections, role confusion attacks, and vector data poisoning. 
 
-## 1. Linux System Utilities (Ubuntu Layer)
-These tools were installed directly into the core Linux subsystem to handle file transfers, decompression, and environment management.
-
-| Utility | Command Used | Functional Purpose |
-| :--- | :--- | :--- |
-| **`python3`** | `sudo apt install python3` | The core execution runtime engine for our application backend. |
-| **`python3-pip`** | `sudo apt install python3-pip` | The package installer for Python, used to download third-party software libraries from the Python Package Index (PyPI). |
-| **`python3-venv`** | `sudo apt install python3-venv` | The virtualization tool used to construct an isolated Python directory ("clean room"), keeping project packages from contaminating the system layer. |
-| **`curl`** | `sudo apt install curl` | A command-line tool for transferring data over network protocols, utilized here to download the native Ollama installer script. |
-| **`zstd`** | `sudo apt install zstd` | Zstandard compression/decompression engine. Required by the Linux system to unpack the highly compressed Ollama binary payload. |
+By combining **fast heuristic signature matching** with a **local semantic AI guardrail**, this project intercepts and sanitizes malicious payloads at both the user query layer and the retrieved document layer *before* they reach the main inference LLM.
 
 ---
 
-## 2. Local AI Infrastructure
-Instead of relying on external cloud APIs, these tools host and run large language models (LLMs) locally inside the WSL container.
+##  Architecture & Security Pipeline
 
-*   **Ollama:** A lightweight service framework that manages the lifetime, memory allocation, and hardware acceleration of large language models on your machine. It exposes a local port (`localhost:11434`) that software applications can query.
-*   **Mistral (7B Model):** A highly efficient 7-billion parameter language model pulled natively through Ollama. It serves as the local intelligence engine responsible for parsing text chunks and evaluating incoming security contexts.
+Standard RAG architectures blindly append retrieved vector data into the LLM system context, leaving them vulnerable to **Indirect Prompt Injection** (where an attacker embeds malicious instructions inside uploaded documents). 
+
+This firewall enforces a **Zero-Trust Retrieval Pipeline**:
+
+[ User Query / Vector Chunks ]
+│
+▼
+┌──────────────────────────┐
+│  Phase 1: RegEx Engine   │ ──(Match)──► [ Redact & Log ] ──► [ Early Return ]
+└────────────┬─────────────┘
+│ (Pass)
+▼
+┌──────────────────────────┐
+│ Phase 2: Local LLM Audit │ ──(Malicious)─► [ Redact ]
+└────────────┬─────────────┘
+│ (Clean / Sanitized)
+▼
+┌──────────────────────────┐
+│  FAISS Vector Retrieval  │
+└────────────┬─────────────┘
+│
+▼
+┌──────────────────────────┐
+│ Safe LLM Context Assembly│ ──► [ Final Answer Generation ]
+└──────────────────────────┘
+
 
 ---
 
-## 3. Python Ecosystem Applications (`venv` Clean Room)
-These specific packages were installed via `pip` inside the virtual environment to build out the Retrieval-Augmented Generation (RAG) and regex scanning pipelines.
+## ✨ Key Features
 
-> **Note:** These dependencies reside exclusively within the local `venv/` directory and require the environment to be active (`source venv/bin/activate`) to be called.
+* **Dual-Phase Defensive Middleware:**
+  * **Phase 1 (Heuristic Engine):** Fast RegEx signature scanning for known attack patterns (e.g., system prompt overrides, developer mode toggles, exfiltration hooks). Operates with minimal execution latency (<5ms).
+  * **Phase 2 (Semantic AI Guardrail):** Converts complex or obfuscated payloads (such as leetspeak or psychological roleplay overrides) into a semantic classification task handled by a local `mistral` model enforcing strict JSON schema outputs.
+* **In-Context Data Sanitization:** Intercepts FAISS vector search results and redacts malicious payloads before appending them to the system instruction prompt.
+* **Interactive CLI Comparison Mode:** Features an interactive dashboard allowing developers to run side-by-side comparisons of queries executed **with** the firewall enabled vs. **unprotected raw RAG execution**.
+* **Audit Tracing & Security Logging:** Centralized logging module that writes matched threat signatures, attack types, and AI classification reasoning to `logs/security_events.log`.
+* **Fail-Safe Exception Handling:** Defaults to restricted access upon guardrail runtime errors or JSON parsing failures, ensuring continuous security boundary enforcement.
 
-### requirements.txt
-pypdf2==3.0.1
-sentence-transformers==3.0.1
-faiss-cpu==1.8.0
-numpy==1.26.4
-ollama==0.2.1
+---
 
-### Technical Breakdown of Libraries:
-*   **`pypdf2` (v3.0.1):** A pure-Python PDF library capable of splitting, merging, and parsing PDF files. In this architecture, it handles extracting raw text strings out of documents so they can be processed by the firewall pipeline.
-*   **`sentence-transformers` (v3.0.1):** A framework used to generate dense vector embeddings from plain text. It translates human phrases into high-dimensional geometric coordinates based on semantic meaning.
-*   **`faiss-cpu` (v1.8.0):** *Facebook AI Similarity Search*. A specialized, highly optimized vector database that stores text embeddings and performs ultra-fast nearest-neighbor searches in memory to find chunks of data with similar semantic meaning.
-*   **`numpy` (v1.26.4):** The fundamental scientific computing package for Python. It provides the underlying multi-dimensional array structures and mathematical processing power used by FAISS and Sentence-Transformers to handle vector math.
-*   **`ollama` (v0.2.1):** The official Python SDK wrapper. It provides clean, native Python functions (like `ollama.chat()`) to automatically format JSON-RPC payloads and pipe them directly into the background Ollama daemon running on your system.
+## 📂 Project Structure
+
+```text
+rag-firewall/
+├── data/                  # Sample PDF/TXT documents for ingestion
+├── logs/                  # Security event logs and threat tracebacks
+├── src/
+│   ├── ai_detector.py     # Phase 2: Local LLM semantic audit engine
+│   ├── detector.py        # Phase 1: RegEx heuristic engine & middleware coordinator
+│   ├── ingest.py          # Document parsing, chunking, and FAISS indexing
+│   ├── retrieve.py        # Vector search, chunk sanitization, and LLM inference
+│   ├── logger.py          # Centralized threat event logging
+│   └── main.py            # CLI entry point with interactive comparison dashboard
+├── requirements.txt       # Python dependencies
+└── README.md              # Documentation
+
+
+Usage
+
+Launch the interactive CLI dashboard:
+Bash
+
+python src/main.py
+
+
+
+Workflow Options:
+
+    . Load & Embed Document: Select a PDF/TXT file to chunk, vectorize, and index inside FAISS.
+
+    . Ask AI Question (Comparison Mode):
+
+        Mode 1 (Standard with Firewall): Routes both user input and retrieved chunks through the dual-phase security engine before LLM generation.
+
+        Mode 2 (Raw Query - Unprotected): Bypasses the firewall to demonstrate how vulnerable RAG pipelines execute malicious prompts.
+
+    . View Security Logs: Inspect real-time threat interception logs and AI guardrail reasoning.
