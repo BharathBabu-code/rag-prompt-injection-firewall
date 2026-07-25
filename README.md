@@ -12,14 +12,27 @@ Standard RAG architectures blindly append retrieved vector data into the LLM sys
 
 This firewall enforces a **Zero-Trust Retrieval Pipeline**:
 
-graph TD
-    A([User Query / Vector Chunks]) --> B{Phase 1: RegEx Engine}
-    B -- Match --> C[Redact & Log] --> D([Early Return])
-    B -- Pass --> E{Phase 2: Local LLM Audit}
-    E -- Malicious --> F[Redact Payload]
-    E -- Clean / Sanitized --> G[(FAISS Vector Retrieval)]
-    F --> G
-    G --> H[Safe LLM Context Assembly] --> I([Final Answer Generation])
+[ User Query / Vector Chunks ]
+             │
+             ▼
+┌──────────────────────────┐
+│  Phase 1: RegEx Engine   │ ──(Match)──► [ Redact & Log ] ──► [ Early Return ]
+└────────────┬─────────────┘
+             │ (Pass)
+             ▼
+┌──────────────────────────┐
+│ Phase 2: Local LLM Audit │ ──(Malicious)─► [ Redact ]
+└────────────┬─────────────┘
+             │ (Clean / Sanitized)
+             ▼
+┌──────────────────────────┐
+│  FAISS Vector Retrieval  │
+└────────────┬─────────────┘
+             │
+             ▼
+┌──────────────────────────┐
+│ Safe LLM Context Assembly│ ──► [ Final Answer Generation ]
+└──────────────────────────┘
 
 
 ---
