@@ -64,8 +64,34 @@ def scan_with_ai(text_chunk):
             raw_output = raw_output.split("```")[1].split("```")[0].strip()
             
         result = json.loads(raw_output)
-        return result.get("malicious_intent", False), result.get("reasoning", "No details provided.")
         
+        # Verify the parsed response is a dictionary
+        if not isinstance(result, dict):
+            raise ValueError(f"LLM returned a {type(result).__name__} instead of a JSON object.")
+
+        # Require exactly the expected fields
+        expected_keys = {"malicious_intent", "reasoning"}
+        actual_keys = set(result.keys())
+
+        if actual_keys != expected_keys:
+            raise ValueError(f"Invalid response schema. Expected keys {expected_keys}, "f"got {actual_keys}.")    
+        
+        # Extract keys, forcing a KeyError if they are missing
+        try:
+            intent = result["malicious_intent"]
+            reason = result["reasoning"]
+        except KeyError as e:
+            raise KeyError(f"LLM JSON missing required key: {e}")
+            
+        # Strict Type Validation
+        if not isinstance(intent, bool):
+            raise TypeError(f"Expected boolean for 'malicious_intent', got {type(intent).__name__}: {intent}")
+            
+        if not isinstance(reason, str):
+            raise TypeError(f"Expected string for 'reasoning', got {type(reason).__name__}")
+            
+        return intent, reason
+    
     except Exception as e:
         print(f"[ GUARDRAIL ERROR] AI classification failed: {e}")
         # Default to safe mode (block/flag) if the security engine itself errors out
