@@ -39,6 +39,12 @@ def clean_text(raw_text):
     return text.strip()
 
 def chunk_text(text, chunk_size=300, overlap=50):
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be greater than zero")
+
+    if overlap < 0 or overlap >= chunk_size:
+        raise ValueError("overlap must be >= 0 and < chunk_size")
+    
     """Splits a massive wall of text into smaller, overlapping chunks of words."""
     print(f"[*] Chunking text (Size: {chunk_size} words, Overlap: {overlap} words)...")
     words = text.split()
