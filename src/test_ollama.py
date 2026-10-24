@@ -3,7 +3,6 @@ import ollama
 def test_local_model():
     print("Sending request to local Mistral engine...")
     try:
-        # We are telling the local model to reply with a very specific constraint
         response = ollama.chat(model='mistral', messages=[
             {
                 'role': 'user',
