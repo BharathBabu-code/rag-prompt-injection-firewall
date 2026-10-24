@@ -60,6 +60,7 @@ def chunk_text(text, chunk_size=300, overlap=50):
 
 def build_and_save_vector_db(chunks, db_dir="embeddings"):
     """Converts text chunks to embeddings and saves them to a FAISS index."""
+    os.makedirs(db_dir, exist_ok=True)
     print("[*] Loading embedding model (all-MiniLM-L6-v2)...")
     # This downloads a small, highly efficient local AI model just for embeddings
     model = SentenceTransformer('all-MiniLM-L6-v2')
